@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Free AI Instagram Content Generator | Create Viral Content',
@@ -30,12 +30,12 @@ export const metadata: Metadata = {
     'instagram marketing tools',
     'social media content generator'
   ],
-};
+}
 
 export default function InstagramLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
-  return children;
+  return children
 }
