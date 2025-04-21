@@ -63,7 +63,7 @@ export default function DashboardLayout({
           })
         }
         
-        if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+        if (event === 'SIGNED_OUT') {
           setIsAuthenticated(false)
           setUser(null)
           router.push('/login')
