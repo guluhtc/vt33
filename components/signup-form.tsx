@@ -97,13 +97,19 @@ export function SignUpForm() {
       const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/instagram/callback`
       const scope = 'instagram_basic,instagram_content_publish,instagram_manage_insights,instagram_manage_comments,pages_show_list,pages_read_engagement'
       
-      const url = `https://api.instagram.com/oauth/authorize?client_id=${appId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code`
+      // Updated Instagram OAuth URL with additional parameters
+      const url = `https://api.instagram.com/oauth/authorize?client_id=${appId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code&state=${generateRandomState()}`
       
       window.location.href = url
     } catch (error) {
       console.error('Instagram login error:', error)
       toast.error('Failed to initiate Instagram login')
     }
+  }
+
+  // Helper function to generate a random state parameter
+  const generateRandomState = () => {
+    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
   }
 
   return (
