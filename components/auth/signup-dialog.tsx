@@ -36,15 +36,15 @@ export function SignupDialog({
 }: SignupDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[400px] bg-white border shadow-lg">
-        <DialogHeader>
-          <DialogTitle className="text-2xl font-bold gradient-text">Get Started Free</DialogTitle>
-          <DialogDescription>
+      <DialogContent className="sm:max-w-[400px] bg-white border shadow-lg p-0">
+        <DialogHeader className="p-6 space-y-2">
+          <DialogTitle className="text-2xl font-bold gradient-text text-center">Get Started Free</DialogTitle>
+          <DialogDescription className="text-center">
             No credit card required • Free 30-day trial
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 mt-4">
+        <div className="px-6 pb-6 space-y-4">
           <SocialButtons 
             isLoading={isLoading}
             onInstagramLogin={onInstagramLogin}

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
 import { Loader2, Mail, Lock, Instagram } from "lucide-react"
@@ -11,7 +11,7 @@ import { toast } from "sonner"
 import { supabase } from "@/lib/supabase"
 import { InstagramBusinessAuth } from "@/lib/instagram/auth"
 
-export default function LoginPage() {
+function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [isInstagramLoading, setIsInstagramLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -180,5 +180,17 @@ export default function LoginPage() {
         </Card>
       </motion.div>
     </div>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    }>
+      <LoginForm />
+    </Suspense>
   )
 }

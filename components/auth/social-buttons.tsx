@@ -28,8 +28,17 @@ export function SocialButtons({ isLoading, onInstagramLogin }: SocialButtonsProp
         onClick={onInstagramLogin}
         disabled={isLoading}
       >
-        <Instagram className="absolute left-4 h-4 w-4 group-hover:text-white" />
-        <span className="text-sm">Continue with Instagram</span>
+        {isLoading ? (
+          <>
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            Connecting...
+          </>
+        ) : (
+          <>
+            <Instagram className="absolute left-4 h-4 w-4 group-hover:text-white" />
+            <span className="text-sm">Continue with Instagram</span>
+          </>
+        )}
       </Button>
     </div>
   )

@@ -38,7 +38,7 @@ export function MobileNav() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="absolute top-24 left-4 right-4 rounded-2xl bg-white/80 backdrop-blur-lg border shadow-lg md:hidden"
+            className="fixed inset-x-4 top-24 rounded-2xl bg-white/80 backdrop-blur-lg border shadow-lg md:hidden"
           >
             <div className="p-6 space-y-4">
               <div className="flex flex-col space-y-2">
@@ -49,7 +49,6 @@ export function MobileNav() {
                     router.push('/instagram')
                     setIsMenuOpen(false)
                   }}
-                  aria-label="Navigate to Instagram tools"
                 >
                   Instagram
                 </Button>
@@ -60,7 +59,6 @@ export function MobileNav() {
                     router.push('/features')
                     setIsMenuOpen(false)
                   }}
-                  aria-label="Navigate to Features page"
                 >
                   Features
                 </Button>
@@ -71,7 +69,6 @@ export function MobileNav() {
                     router.push('/about')
                     setIsMenuOpen(false)
                   }}
-                  aria-label="Navigate to About page"
                 >
                   About
                 </Button>
@@ -82,13 +79,12 @@ export function MobileNav() {
                     router.push('/contact')
                     setIsMenuOpen(false)
                   }}
-                  aria-label="Navigate to Contact page"
                 >
                   Contact
                 </Button>
               </div>
               
-              <div className="space-y-2 pt-4 border-t flex flex-col items-center">
+              <div className="space-y-2 pt-4 border-t">
                 <Button 
                   variant="ghost" 
                   className="w-full rounded-full"
@@ -96,11 +92,10 @@ export function MobileNav() {
                     router.push('/login')
                     setIsMenuOpen(false)
                   }}
-                  aria-label="Log in to your account"
                 >
                   Log in
                 </Button>
-                <div className="w-full flex justify-center" onClick={() => setIsMenuOpen(false)}>
+                <div className="w-full" onClick={() => setIsMenuOpen(false)}>
                   <SignUpForm />
                 </div>
               </div>
