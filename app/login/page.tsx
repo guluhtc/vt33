@@ -34,7 +34,6 @@ export default function LoginPage() {
 
       if (error) throw error
 
-      // Redirect to dashboard on successful login
       router.push("/dashboard")
       router.refresh() // Force a refresh to update auth state
       toast.success("Welcome back!")
