@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Free Instagram Bios Generator tool (Viral & Trending)',
@@ -13,12 +13,12 @@ export const metadata: Metadata = {
     title: 'Free Instagram Bios Generator tool (Viral & Trending)',
     description: 'Create professional and engaging Instagram bios in seconds with our free AI-powered tool. Stand out from the crowd.',
   },
-};
+}
 
 export default function BiosLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
-  return children;
+  return children
 }

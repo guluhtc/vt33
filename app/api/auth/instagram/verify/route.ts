@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server'
 import { verifyToken } from '@/lib/instagram/verify'
 import { cookies } from 'next/headers'
-import { createClient } from '@supabase/supabase-js'
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const supabase = createClient(supabaseUrl, supabaseKey)
+export const dynamic = 'force-dynamic'
 
 export async function POST(request: Request) {
   try {
@@ -17,20 +15,15 @@ export async function POST(request: Request) {
 
     // Get current user session
     const cookieStore = cookies()
-    const sessionCookie = cookieStore.get('sb-access-token')?.value
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    const { data: { session } } = await supabase.auth.getSession()
 
-    if (!sessionCookie) {
+    if (!session) {
       return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })
     }
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser(sessionCookie)
-
-    if (authError || !user) {
-      return NextResponse.json({ error: 'Invalid session' }, { status: 401 })
-    }
-
     // Verify the token
-    const result = await verifyToken(user.id, token)
+    const result = await verifyToken(session.user.id, token)
 
     if (!result.isValid) {
       return NextResponse.json({ error: result.error }, { status: 400 })

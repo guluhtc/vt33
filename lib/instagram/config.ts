@@ -1,7 +1,7 @@
 export const instagramConfig = {
   appId: process.env.NEXT_PUBLIC_INSTAGRAM_APP_ID,
   appSecret: process.env.INSTAGRAM_APP_SECRET,
-  accessToken: process.env.NEXT_PUBLIC_INSTAGRAM_ACCESS_TOKEN,
+  accessToken: 'IGAAJA0gG176lBZAE02VTJLWlhMQzNJcHZAiU25qOWFGblhPZAy1DOVRGMjFsdHNVUHV3Ym9yUTE4QnFrOFpMUktKWWttS3pKWE9Pb1RGWXhFQ3ppZAkJiSjBsMWdiczBBQWczYU15c1RFQjhuMTFEc0R2S0hmdkxHSlRLU19OX29XcwZDZD',
   apiVersion: 'v12.0',
   graphApiUrl: 'https://graph.instagram.com',
   graphApiPublishUrl: 'https://graph.facebook.com',

@@ -1,4 +1,4 @@
-import type { Metadata } from 'next';
+import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Free Instagram Captions Generator tool (Viral & Trending)',
@@ -13,12 +13,12 @@ export const metadata: Metadata = {
     title: 'Free Instagram Captions Generator tool (Viral & Trending)',
     description: 'Generate viral and trending Instagram captions in seconds with our free AI-powered tool. Perfect for creators and businesses.',
   },
-};
+}
 
 export default function CaptionsLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
-  return children;
+  return children
 }

@@ -1,87 +1,71 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
+import type { NextRequest } from 'next/server'
 import { cookies } from 'next/headers'
+import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
+import { InstagramBusinessAuth } from '@/lib/instagram/auth'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-const supabase = createClient(supabaseUrl, supabaseKey)
+export const dynamic = 'force-dynamic'
 
-export async function GET(request: Request) {
+export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const code = searchParams.get('code')
     const error = searchParams.get('error')
+    const next = searchParams.get('next') || '/dashboard'
 
     if (error) {
       console.error('Instagram OAuth error:', error)
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings?error=instagram_auth`)
+      return NextResponse.redirect(new URL('/login?error=instagram_auth', request.url))
     }
 
     if (!code) {
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings?error=invalid_request`)
+      return NextResponse.redirect(new URL('/login?error=invalid_request', request.url))
     }
 
-    // Exchange code for access token
-    const tokenResponse = await fetch('https://api.instagram.com/oauth/access_token', {
-      method: 'POST',
-      body: new URLSearchParams({
-        client_id: process.env.NEXT_PUBLIC_INSTAGRAM_APP_ID!,
-        client_secret: process.env.INSTAGRAM_APP_SECRET!,
-        grant_type: 'authorization_code',
-        redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/instagram/callback`,
-        code,
-      }),
-    })
-
-    if (!tokenResponse.ok) {
-      throw new Error('Failed to exchange code for token')
-    }
-
-    const tokenData = await tokenResponse.json()
-
-    // Exchange short-lived token for long-lived token
-    const longLivedTokenResponse = await fetch(
-      `https://graph.instagram.com/access_token?grant_type=ig_exchange_token&client_secret=${process.env.INSTAGRAM_APP_SECRET}&access_token=${tokenData.access_token}`
-    )
-
-    if (!longLivedTokenResponse.ok) {
-      throw new Error('Failed to exchange for long-lived token')
-    }
-
-    const longLivedTokenData = await longLivedTokenResponse.json()
+    // Exchange code for short-lived token
+    const tokenData = await InstagramBusinessAuth.exchangeCodeForToken(code)
+    
+    // Exchange for long-lived token
+    const longLivedTokenData = await InstagramBusinessAuth.getLongLivedToken(tokenData.access_token)
+    
+    // Get business profile data
+    const profileData = await InstagramBusinessAuth.getBusinessProfile(longLivedTokenData.access_token)
 
     // Get current user session
     const cookieStore = cookies()
-    const sessionCookie = cookieStore.get('sb-access-token')?.value
+    const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
+    const { data: { session } } = await supabase.auth.getSession()
 
-    if (!sessionCookie) {
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/login?error=no_session`)
+    if (!session) {
+      return NextResponse.redirect(new URL('/login?error=no_session', request.url))
     }
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser(sessionCookie)
-
-    if (authError || !user) {
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/login?error=invalid_session`)
-    }
-
-    // Store Instagram credentials
-    const { error: dbError } = await supabase
-      .from('instagram_accounts')
+    // Store Instagram business account data
+    const { error: storeError } = await supabase
+      .from('instagram_business_accounts')
       .upsert({
-        user_id: user.id,
-        instagram_user_id: tokenData.user_id,
+        user_id: session.user.id,
+        instagram_business_account_id: profileData.id,
+        username: profileData.username,
+        name: profileData.name,
+        profile_picture_url: profileData.profile_picture_url,
         access_token: longLivedTokenData.access_token,
-        token_expires_at: new Date(Date.now() + longLivedTokenData.expires_in * 1000).toISOString()
+        token_expires_at: new Date(Date.now() + (longLivedTokenData.expires_in * 1000)),
+        business_account_type: profileData.account_type,
+        media_count: profileData.media_count,
+        followers_count: profileData.followers_count,
+        following_count: profileData.follows_count,
+        website: profileData.website,
+        biography: profileData.biography
       })
 
-    if (dbError) {
-      console.error('Database error:', dbError)
-      return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings?error=database`)
+    if (storeError) {
+      throw storeError
     }
 
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings?success=true`)
+    return NextResponse.redirect(new URL(next, request.url))
   } catch (error) {
     console.error('Instagram callback error:', error)
-    return NextResponse.redirect(`${process.env.NEXT_PUBLIC_APP_URL}/dashboard/settings?error=unknown`)
+    return NextResponse.redirect(new URL('/login?error=unknown', request.url))
   }
 }
