@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { verifyToken } from '@/lib/instagram/verify'
+import { validateInstagramToken } from '@/lib/instagram/verify'
 import { cookies } from 'next/headers'
 import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs'
 
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     }
 
     // Verify the token
-    const result = await verifyToken(session.user.id, token)
+    const result = await validateInstagramToken(session.user.id, token)
 
     if (!result.isValid) {
       return NextResponse.json({ error: result.error }, { status: 400 })

@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import { verifyToken } from './token'
+import { verifyToken as checkTokenValidity } from './token'
 
 export interface VerificationResult {
   isValid: boolean;
@@ -7,7 +7,7 @@ export interface VerificationResult {
   error?: string;
 }
 
-export async function verifyToken(userId: string, token: string): Promise<VerificationResult> {
+export async function validateInstagramToken(userId: string, token: string): Promise<VerificationResult> {
   try {
     const { data: session, error: sessionError } = await supabase
       .from('instagram_auth_sessions')
@@ -31,7 +31,7 @@ export async function verifyToken(userId: string, token: string): Promise<Verifi
       }
     }
 
-    const tokenInfo = await verifyToken(userId)
+    const tokenInfo = await checkTokenValidity(userId)
     return {
       isValid: tokenInfo.isValid,
       token: tokenInfo.isValid ? token : undefined,
