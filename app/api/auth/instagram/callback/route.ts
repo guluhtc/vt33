@@ -15,7 +15,7 @@ export async function GET(request: Request) {
 
     if (error) {
       console.error('Instagram OAuth error:', error)
-      return NextResponse.redirect(new URL('/login?error=instagram_auth', request.url))
+      return NextResponse.redirect(new URL(`/login?error=${error}`, request.url))
     }
 
     if (!code || !state) {
@@ -34,47 +34,52 @@ export async function GET(request: Request) {
       return NextResponse.redirect(new URL('/login?error=no_session', request.url))
     }
 
-    // Exchange code for token
-    const tokenData = await InstagramBusinessAuth.exchangeCodeForToken(code)
-    
-    // Get long-lived token
-    const longLivedTokenData = await InstagramBusinessAuth.getLongLivedToken(tokenData.access_token)
-    
-    // Get profile data
-    const profileData = await InstagramBusinessAuth.getBusinessProfile(longLivedTokenData.access_token)
+    try {
+      // Exchange code for token
+      const tokenData = await InstagramBusinessAuth.exchangeCodeForToken(code)
+      
+      // Get long-lived token
+      const longLivedTokenData = await InstagramBusinessAuth.getLongLivedToken(tokenData.access_token)
+      
+      // Get profile data
+      const profileData = await InstagramBusinessAuth.getBusinessProfile(longLivedTokenData.access_token)
 
-    // Store Instagram session
-    await InstagramBusinessAuth.storeAuthSession(session.user.id, {
-      access_token: longLivedTokenData.access_token,
-      expires_in: longLivedTokenData.expires_in,
-      scope: tokenData.permissions.split(',')
-    })
-
-    // Update user profile with Instagram data
-    const { error: updateError } = await supabase
-      .from('users')
-      .update({
-        instagram_id: profileData.id,
-        instagram_username: profileData.username,
-        instagram_full_name: profileData.name,
-        instagram_profile_picture: profileData.profile_picture_url,
-        instagram_bio: profileData.biography,
-        instagram_website: profileData.website,
-        instagram_followers_count: profileData.followers_count,
-        instagram_following_count: profileData.follows_count,
-        instagram_media_count: profileData.media_count,
-        instagram_account_type: profileData.account_type,
-        instagram_is_business: true,
-        instagram_connected_at: new Date().toISOString()
+      // Store Instagram session
+      await InstagramBusinessAuth.storeAuthSession(session.user.id, {
+        access_token: longLivedTokenData.access_token,
+        expires_in: longLivedTokenData.expires_in,
+        scope: tokenData.permissions.split(',')
       })
-      .eq('id', session.user.id)
 
-    if (updateError) {
-      console.error('Error updating user:', updateError)
-      return NextResponse.redirect(new URL('/login?error=update_failed', request.url))
+      // Update user profile with Instagram data
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          instagram_id: profileData.id,
+          instagram_username: profileData.username,
+          instagram_full_name: profileData.name,
+          instagram_profile_picture: profileData.profile_picture_url,
+          instagram_bio: profileData.biography,
+          instagram_website: profileData.website,
+          instagram_followers_count: profileData.followers_count,
+          instagram_following_count: profileData.follows_count,
+          instagram_media_count: profileData.media_count,
+          instagram_account_type: profileData.account_type,
+          instagram_is_business: true,
+          instagram_connected_at: new Date().toISOString()
+        })
+        .eq('id', session.user.id)
+
+      if (updateError) {
+        console.error('Error updating user:', updateError)
+        return NextResponse.redirect(new URL('/login?error=update_failed', request.url))
+      }
+
+      return NextResponse.redirect(new URL(next, request.url))
+    } catch (error: any) {
+      console.error('Instagram auth error:', error)
+      return NextResponse.redirect(new URL(`/login?error=${error.message || 'unknown'}`, request.url))
     }
-
-    return NextResponse.redirect(new URL(next, request.url))
   } catch (error) {
     console.error('Instagram callback error:', error)
     return NextResponse.redirect(new URL('/login?error=unknown', request.url))
