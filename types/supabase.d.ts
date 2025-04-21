@@ -16,20 +16,20 @@ export interface Database {
           role: string
           created_at: string
           last_login: string | null
-          full_name?: string | null
-          phone?: string | null
-          instagram_id?: string | null
-          instagram_username?: string | null
-          instagram_full_name?: string | null
-          instagram_profile_picture?: string | null
-          instagram_bio?: string | null
-          instagram_website?: string | null
-          instagram_followers_count?: number | null
-          instagram_following_count?: number | null
-          instagram_media_count?: number | null
-          instagram_account_type?: string | null
-          instagram_is_business?: boolean | null
-          instagram_connected_at?: string | null
+          full_name: string | null
+          phone: string | null
+          instagram_id: string | null
+          instagram_username: string | null
+          instagram_full_name: string | null
+          instagram_profile_picture: string | null
+          instagram_bio: string | null
+          instagram_website: string | null
+          instagram_followers_count: number | null
+          instagram_following_count: number | null
+          instagram_media_count: number | null
+          instagram_account_type: string | null
+          instagram_is_business: boolean | null
+          instagram_connected_at: string | null
         }
         Insert: {
           id?: string
@@ -132,6 +132,41 @@ export interface Database {
           following_count?: number | null
           website?: string | null
           biography?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      instagram_auth_sessions: {
+        Row: {
+          id: string
+          user_id: string
+          access_token: string
+          refresh_token: string | null
+          token_type: string
+          expires_at: string
+          scope: string[]
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          access_token: string
+          refresh_token?: string | null
+          token_type?: string
+          expires_at: string
+          scope?: string[]
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          access_token?: string
+          refresh_token?: string | null
+          token_type?: string
+          expires_at?: string
+          scope?: string[]
           created_at?: string
           updated_at?: string
         }

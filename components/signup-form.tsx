@@ -12,9 +12,7 @@ export function SignUpForm() {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
-    fullName: "",
     email: "",
-    phone: "",
     password: ""
   })
 
@@ -24,18 +22,9 @@ export function SignUpForm() {
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!formData.fullName.trim()) {
-      toast.error("Please enter your full name")
-      return
-    }
 
     if (!formData.email.trim() || !/\S+@\S+\.\S+/.test(formData.email)) {
       toast.error("Please enter a valid email address")
-      return
-    }
-
-    if (!formData.phone.trim() || !/^\+?[\d\s-]{10,}$/.test(formData.phone)) {
-      toast.error("Please enter a valid phone number")
       return
     }
 
@@ -50,10 +39,7 @@ export function SignUpForm() {
         email: formData.email,
         password: formData.password,
         options: {
-          data: {
-            full_name: formData.fullName,
-            phone: formData.phone
-          }
+          emailRedirectTo: `${window.location.origin}/api/auth/callback`
         }
       })
 
@@ -66,8 +52,6 @@ export function SignUpForm() {
             {
               id: data.user.id,
               email: data.user.email,
-              full_name: formData.fullName,
-              phone: formData.phone,
               role: 'user'
             }
           ])
@@ -78,7 +62,7 @@ export function SignUpForm() {
 
         toast.success("Account created successfully! Please check your email to verify your account.")
         setIsOpen(false)
-        setFormData({ fullName: "", email: "", phone: "", password: "" })
+        setFormData({ email: "", password: "" })
       }
     } catch (error: any) {
       console.error('Signup error:', error)

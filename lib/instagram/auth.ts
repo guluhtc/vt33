@@ -1,26 +1,26 @@
-import { createClient } from '@supabase/supabase-js'
-import { instagramConfig } from './config'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import type { Database } from '@/types/supabase'
+
+const supabase = createClientComponentClient<Database>()
 
 export class InstagramBusinessAuth {
   private static readonly GRAPH_API_URL = 'https://graph.instagram.com'
-  private static readonly AUTH_URL = 'https://www.instagram.com/oauth/authorize'
+  private static readonly AUTH_URL = 'https://api.instagram.com/oauth/authorize'
   private static readonly TOKEN_URL = 'https://api.instagram.com/oauth/access_token'
   private static readonly LONG_LIVED_TOKEN_URL = 'https://graph.instagram.com/access_token'
 
   static getAuthUrl(): string {
     const params = new URLSearchParams({
       client_id: process.env.NEXT_PUBLIC_INSTAGRAM_APP_ID!,
-      redirect_uri: instagramConfig.redirectUri,
+      redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/instagram/callback`,
       response_type: 'code',
       scope: [
-        'instagram_business_basic',
-        'instagram_business_content_publish',
-        'instagram_business_manage_comments',
-        'instagram_business_manage_messages',
-        'instagram_business_manage_insights'
-      ].join(','),
-      enable_fb_login: '0',
-      force_authentication: '1'
+        'instagram_basic',
+        'instagram_content_publish',
+        'instagram_manage_insights',
+        'instagram_manage_comments'
+      ].join(' '),
+      state: crypto.randomUUID()
     })
 
     return `${this.AUTH_URL}?${params.toString()}`
@@ -32,17 +32,19 @@ export class InstagramBusinessAuth {
   }> {
     const response = await fetch(this.TOKEN_URL, {
       method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: new URLSearchParams({
         client_id: process.env.NEXT_PUBLIC_INSTAGRAM_APP_ID!,
         client_secret: process.env.INSTAGRAM_APP_SECRET!,
         grant_type: 'authorization_code',
-        redirect_uri: instagramConfig.redirectUri,
+        redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/instagram/callback`,
         code,
       }),
     })
 
     if (!response.ok) {
-      throw new Error('Failed to exchange code for token')
+      const error = await response.text()
+      throw new Error(`Failed to exchange code for token: ${error}`)
     }
 
     return response.json()
@@ -53,10 +55,13 @@ export class InstagramBusinessAuth {
     token_type: string;
     expires_in: number;
   }> {
-    const response = await fetch(`${this.LONG_LIVED_TOKEN_URL}?grant_type=ig_exchange_token&client_secret=${process.env.INSTAGRAM_APP_SECRET}&access_token=${shortLivedToken}`)
+    const response = await fetch(
+      `${this.LONG_LIVED_TOKEN_URL}?grant_type=ig_exchange_token&client_secret=${process.env.INSTAGRAM_APP_SECRET}&access_token=${shortLivedToken}`
+    )
 
     if (!response.ok) {
-      throw new Error('Failed to get long-lived token')
+      const error = await response.text()
+      throw new Error(`Failed to get long-lived token: ${error}`)
     }
 
     return response.json()
@@ -68,14 +73,10 @@ export class InstagramBusinessAuth {
     )
 
     if (!response.ok) {
-      throw new Error('Failed to fetch business profile')
+      const error = await response.text()
+      throw new Error(`Failed to fetch business profile: ${error}`)
     }
 
     return response.json()
-  }
-
-  static async storeBusinessAccount(userId: string, data: any): Promise<void> {
-    // This method should be called from a server-side API route
-    throw new Error('This method should be called from a server-side API route')
   }
 }

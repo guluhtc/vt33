@@ -11,9 +11,7 @@ import { SocialButtons } from "./social-buttons"
 import { SignupFormFields } from "./signup-form-fields"
 
 interface SignupFormData {
-  fullName: string
   email: string
-  phone: string
   password: string
 }
 

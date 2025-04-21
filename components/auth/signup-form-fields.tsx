@@ -2,12 +2,10 @@
 
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { Mail, User, Phone, Lock, Loader2 } from "lucide-react"
+import { Mail, Lock, Loader2 } from "lucide-react"
 
 interface SignupFormData {
-  fullName: string
   email: string
-  phone: string
   password: string
 }
 
@@ -24,17 +22,6 @@ export function SignupFormFields({ formData, isLoading, onChange, onSubmit }: Si
       <div className="space-y-4">
         <div className="relative">
           <Input
-            placeholder="Full Name"
-            value={formData.fullName}
-            onChange={(e) => onChange('fullName', e.target.value)}
-            className="pl-10 h-11"
-            required
-          />
-          <User className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-        </div>
-
-        <div className="relative">
-          <Input
             type="email"
             placeholder="Email Address"
             value={formData.email}
@@ -43,18 +30,6 @@ export function SignupFormFields({ formData, isLoading, onChange, onSubmit }: Si
             required
           />
           <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-        </div>
-
-        <div className="relative">
-          <Input
-            type="tel"
-            placeholder="Phone Number"
-            value={formData.phone}
-            onChange={(e) => onChange('phone', e.target.value)}
-            className="pl-10 h-11"
-            required
-          />
-          <Phone className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
         </div>
 
         <div className="relative">
