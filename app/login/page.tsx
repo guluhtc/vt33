@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
-import { Loader2, Mail, Lock } from "lucide-react"
+import { Loader2, Mail, Lock, Instagram } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card } from "@/components/ui/card"
@@ -11,9 +11,11 @@ import { toast } from "sonner"
 import { supabase } from "@/lib/supabase"
 import { Navbar } from "@/components/navbar"
 import { FooterSection } from "@/components/footer-section"
+import { InstagramBusinessAuth } from "@/lib/instagram/auth"
 
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
+  const [isInstagramLoading, setIsInstagramLoading] = useState(false)
   const [formData, setFormData] = useState({
     email: "",
     password: ""
@@ -27,18 +29,35 @@ export default function LoginPage() {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
-        password: formData.password
+        password: formData.password,
+        options: {
+          redirectTo: `${window.location.origin}/dashboard`
+        }
       })
 
       if (error) throw error
 
+      // Redirect to dashboard on successful login
       router.push("/dashboard")
+      router.refresh() // Force a refresh to update auth state
       toast.success("Welcome back!")
     } catch (error: any) {
       console.error("Login error:", error)
       toast.error(error.message || "Failed to login")
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleInstagramLogin = async () => {
+    setIsInstagramLoading(true)
+    try {
+      const authUrl = InstagramBusinessAuth.getAuthUrl()
+      window.location.href = authUrl
+    } catch (error) {
+      console.error('Instagram login error:', error)
+      toast.error('Failed to initiate Instagram login')
+      setIsInstagramLoading(false)
     }
   }
 
@@ -62,6 +81,34 @@ export default function LoginPage() {
           </div>
 
           <Card className="p-6 space-y-6">
+            <Button
+              className="w-full h-12 relative hover:bg-gradient-to-r from-[#833AB4] via-[#FD1D1D] to-[#F77737] hover:text-white group transition-colors"
+              variant="outline"
+              onClick={handleInstagramLogin}
+              disabled={isInstagramLoading}
+            >
+              {isInstagramLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Connecting to Instagram...
+                </>
+              ) : (
+                <>
+                  <Instagram className="mr-2 h-4 w-4" />
+                  Continue with Instagram
+                </>
+              )}
+            </Button>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">Or continue with email</span>
+              </div>
+            </div>
+
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-4">
                 <div className="relative">
@@ -100,7 +147,7 @@ export default function LoginPage() {
                     Signing in...
                   </>
                 ) : (
-                  "Sign in"
+                  "Sign in with Email"
                 )}
               </Button>
 
