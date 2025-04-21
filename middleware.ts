@@ -7,10 +7,11 @@ export async function middleware(req: NextRequest) {
   const supabase = createMiddlewareClient({ req, res })
 
   // Refresh session if expired
-  const { data: { session }, error } = await supabase.auth.getSession()
+  await supabase.auth.getSession()
 
   // Handle authentication for protected routes
   if (req.nextUrl.pathname.startsWith('/dashboard')) {
+    const { data: { session } } = await supabase.auth.getSession()
     if (!session) {
       const redirectUrl = new URL('/login', req.url)
       redirectUrl.searchParams.set('returnTo', req.nextUrl.pathname)
@@ -25,11 +26,12 @@ export const config = {
   matcher: [
     /*
      * Match all request paths except for the ones starting with:
+     * - api/auth (auth API routes)
      * - _next/static (static files)
      * - _next/image (image optimization files)
      * - favicon.ico (favicon file)
      * - public (public files)
      */
-    '/((?!_next/static|_next/image|favicon.ico|public).*)',
+    '/((?!api/auth|_next/static|_next/image|favicon.ico|public).*)',
   ],
 }

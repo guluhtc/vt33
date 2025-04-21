@@ -15,38 +15,72 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error('Instagram OAuth error:', error)
-      return NextResponse.redirect(new URL('/login?error=instagram_auth', request.url))
+      return NextResponse.redirect(new URL(`/login?error=${error}`, request.url))
     }
 
     if (!code) {
-      return NextResponse.redirect(new URL('/login?error=invalid_request', request.url))
+      console.error('No code parameter found in callback URL')
+      return NextResponse.redirect(new URL('/login?error=missing_code', request.url))
     }
-
-    // Exchange code for short-lived token
-    const tokenData = await InstagramBusinessAuth.exchangeCodeForToken(code)
-    
-    // Exchange for long-lived token
-    const longLivedTokenData = await InstagramBusinessAuth.getLongLivedToken(tokenData.access_token)
-    
-    // Get business profile data
-    const profileData = await InstagramBusinessAuth.getBusinessProfile(longLivedTokenData.access_token)
 
     // Get current user session
     const cookieStore = cookies()
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
     const { data: { session } } = await supabase.auth.getSession()
 
+    // If there's no existing session, we need to create one
     if (!session) {
-      console.error('No valid session found during Instagram callback')
-      return NextResponse.redirect(new URL('/login?error=no_session', request.url))
+      // Create a temporary user for the Instagram login
+      const randomEmail = `instagram_user_${Date.now()}@techigem.com`
+      const randomPassword = Math.random().toString(36).substring(2, 15)
+      
+      const { data: authData, error: signUpError } = await supabase.auth.signUp({
+        email: randomEmail,
+        password: randomPassword,
+        options: {
+          data: {
+            source: 'instagram',
+            instagram_code: code
+          }
+        }
+      })
+      
+      if (signUpError) {
+        console.error('Error creating temporary user:', signUpError)
+        return NextResponse.redirect(new URL('/login?error=auth_error', request.url))
+      }
+      
+      // Get the session after sign-up
+      const { data: { session: newSession } } = await supabase.auth.getSession()
+      if (!newSession) {
+        console.error('Failed to create session for Instagram user')
+        return NextResponse.redirect(new URL('/login?error=no_session_created', request.url))
+      }
     }
-
+    
     try {
+      // Now we have a valid session, exchange the code for a token
+      const tokenData = await InstagramBusinessAuth.exchangeCodeForToken(code)
+      
+      // Exchange for long-lived token
+      const longLivedTokenData = await InstagramBusinessAuth.getLongLivedToken(tokenData.access_token)
+      
+      // Get business profile data
+      const profileData = await InstagramBusinessAuth.getBusinessProfile(longLivedTokenData.access_token)
+      
+      // Get current user session again (it might be the new one or the existing one)
+      const { data: { session: currentSession } } = await supabase.auth.getSession()
+      
+      if (!currentSession) {
+        console.error('No session available after authentication flow')
+        return NextResponse.redirect(new URL('/login?error=session_lost', request.url))
+      }
+      
       // Store Instagram business account data
-      const { error: storeError } = await supabase
+      const { error: accountError } = await supabase
         .from('instagram_business_accounts')
         .upsert({
-          user_id: session.user.id,
+          user_id: currentSession.user.id,
           instagram_business_account_id: profileData.id,
           username: profileData.username,
           name: profileData.name,
@@ -61,18 +95,47 @@ export async function GET(request: NextRequest) {
           biography: profileData.biography
         })
 
-      if (storeError) {
-        console.error('Error storing Instagram account:', storeError)
-        throw storeError
+      if (accountError) {
+        console.error('Error storing Instagram account:', accountError)
+        throw accountError
+      }
+      
+      // Update user profile with Instagram data
+      const { error: userError } = await supabase
+        .from('users')
+        .upsert({
+          id: currentSession.user.id,
+          email: currentSession.user.email,
+          instagram_id: profileData.id,
+          instagram_username: profileData.username,
+          instagram_full_name: profileData.name,
+          instagram_profile_picture: profileData.profile_picture_url,
+          instagram_bio: profileData.biography,
+          instagram_website: profileData.website,
+          instagram_followers_count: profileData.followers_count,
+          instagram_following_count: profileData.follows_count,
+          instagram_media_count: profileData.media_count,
+          instagram_account_type: profileData.account_type,
+          instagram_is_business: profileData.account_type === 'BUSINESS',
+          instagram_connected_at: new Date().toISOString()
+        })
+      
+      if (userError) {
+        console.error('Error updating user with Instagram data:', userError)
+        // We can continue even if this fails
       }
 
       return NextResponse.redirect(new URL(next, request.url))
-    } catch (error) {
-      console.error('Database error during Instagram callback:', error)
-      return NextResponse.redirect(new URL('/login?error=database_error', request.url))
+    } catch (error: any) {
+      console.error('Instagram data processing error:', error)
+      return NextResponse.redirect(
+        new URL(`/login?error=instagram_processing&message=${encodeURIComponent(error.message || '')}`, request.url)
+      )
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error('Instagram callback error:', error)
-    return NextResponse.redirect(new URL('/login?error=unknown', request.url))
+    return NextResponse.redirect(
+      new URL(`/login?error=instagram_callback&message=${encodeURIComponent(error.message || '')}`, request.url)
+    )
   }
 }
