@@ -34,7 +34,11 @@ export default function LoginPage() {
 
       if (error) throw error
 
-      router.push("/dashboard")
+      // Get the return URL from the query parameter or default to dashboard
+      const searchParams = new URLSearchParams(window.location.search)
+      const returnTo = searchParams.get('returnTo') || '/dashboard'
+
+      router.push(returnTo)
       router.refresh() // Force a refresh to update auth state
       toast.success("Welcome back!")
     } catch (error: any) {

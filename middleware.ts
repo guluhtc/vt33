@@ -12,7 +12,9 @@ export async function middleware(req: NextRequest) {
   // Handle authentication for protected routes
   if (req.nextUrl.pathname.startsWith('/dashboard')) {
     if (!session) {
-      return NextResponse.redirect(new URL('/login', req.url))
+      const redirectUrl = new URL('/login', req.url)
+      redirectUrl.searchParams.set('returnTo', req.nextUrl.pathname)
+      return NextResponse.redirect(redirectUrl)
     }
   }
 
