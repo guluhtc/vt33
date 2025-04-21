@@ -1,9 +1,11 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Instagram, Loader2 } from "lucide-react"
 import { InstagramBusinessAuth } from "@/lib/instagram/auth"
+import { supabase } from "@/lib/supabase"
 import { toast } from "sonner"
 
 interface InstagramLoginButtonProps {
@@ -18,15 +20,26 @@ export function InstagramLoginButton({
   size = "default"
 }: InstagramLoginButtonProps) {
   const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
 
   const handleLogin = async () => {
     setIsLoading(true)
     try {
+      // Check if user is authenticated
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      
+      if (sessionError || !session) {
+        router.push('/login')
+        toast.error('Please sign in to continue')
+        return
+      }
+
       const authUrl = InstagramBusinessAuth.getAuthUrl()
       window.location.href = authUrl
     } catch (error) {
       console.error('Instagram login error:', error)
       toast.error('Failed to initiate Instagram login')
+    } finally {
       setIsLoading(false)
     }
   }
