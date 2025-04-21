@@ -29,10 +29,7 @@ export default function LoginPage() {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
         email: formData.email,
-        password: formData.password,
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`
-        }
+        password: formData.password
       })
 
       if (error) throw error
