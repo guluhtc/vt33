@@ -9,19 +9,40 @@ export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
   const code = requestUrl.searchParams.get('code')
   const next = requestUrl.searchParams.get('next') || '/dashboard'
+  const error = requestUrl.searchParams.get('error')
+
+  if (error) {
+    console.error('Auth error:', error)
+    return NextResponse.redirect(new URL(`/login?error=${error}`, requestUrl.origin))
+  }
 
   if (code) {
     const cookieStore = cookies()
     const supabase = createRouteHandlerClient({ cookies: () => cookieStore })
     
     try {
-      await supabase.auth.exchangeCodeForSession(code)
+      // Exchange the code for a session
+      const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code)
+      
+      if (exchangeError) {
+        console.error('Error exchanging code for session:', exchangeError)
+        return NextResponse.redirect(new URL('/login?error=auth_exchange', requestUrl.origin))
+      }
+
+      // Check if the session was successfully created
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        console.error('No session after code exchange')
+        return NextResponse.redirect(new URL('/login?error=no_session_created', requestUrl.origin))
+      }
+
+      // Redirect to the next page with proper session
       return NextResponse.redirect(new URL(next, requestUrl.origin))
     } catch (error) {
       console.error('Auth callback error:', error)
-      return NextResponse.redirect(new URL('/login?error=auth', requestUrl.origin))
+      return NextResponse.redirect(new URL('/login?error=auth_exception', requestUrl.origin))
     }
   }
 
-  return NextResponse.redirect(new URL('/login', requestUrl.origin))
+  return NextResponse.redirect(new URL('/login?error=missing_code', requestUrl.origin))
 }

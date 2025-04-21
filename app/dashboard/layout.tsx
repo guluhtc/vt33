@@ -24,11 +24,18 @@ export default function DashboardLayout({
 
   const checkAuth = useCallback(async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession()
+      const { data: { session }, error } = await supabase.auth.getSession()
+      
+      if (error) {
+        console.error('Session error:', error)
+        throw error
+      }
+      
       if (!session) {
-        router.push('/login')
+        router.push(`/login?returnTo=${encodeURIComponent(window.location.pathname)}`)
         return
       }
+      
       setIsAuthenticated(true)
       setUser({
         id: session.user.id,
@@ -44,7 +51,30 @@ export default function DashboardLayout({
 
   useEffect(() => {
     checkAuth()
-  }, [checkAuth])
+    
+    // Set up auth state listener for real-time session changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          setIsAuthenticated(true)
+          setUser({
+            id: session.user.id,
+            email: session.user.email || ''
+          })
+        }
+        
+        if (event === 'SIGNED_OUT' || event === 'USER_DELETED') {
+          setIsAuthenticated(false)
+          setUser(null)
+          router.push('/login')
+        }
+      }
+    )
+
+    return () => {
+      subscription.unsubscribe()
+    }
+  }, [checkAuth, router])
 
   if (isLoading) {
     return (

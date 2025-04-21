@@ -37,33 +37,40 @@ export async function GET(request: NextRequest) {
     const { data: { session } } = await supabase.auth.getSession()
 
     if (!session) {
+      console.error('No valid session found during Instagram callback')
       return NextResponse.redirect(new URL('/login?error=no_session', request.url))
     }
 
-    // Store Instagram business account data
-    const { error: storeError } = await supabase
-      .from('instagram_business_accounts')
-      .upsert({
-        user_id: session.user.id,
-        instagram_business_account_id: profileData.id,
-        username: profileData.username,
-        name: profileData.name,
-        profile_picture_url: profileData.profile_picture_url,
-        access_token: longLivedTokenData.access_token,
-        token_expires_at: new Date(Date.now() + (longLivedTokenData.expires_in * 1000)),
-        business_account_type: profileData.account_type,
-        media_count: profileData.media_count,
-        followers_count: profileData.followers_count,
-        following_count: profileData.follows_count,
-        website: profileData.website,
-        biography: profileData.biography
-      })
+    try {
+      // Store Instagram business account data
+      const { error: storeError } = await supabase
+        .from('instagram_business_accounts')
+        .upsert({
+          user_id: session.user.id,
+          instagram_business_account_id: profileData.id,
+          username: profileData.username,
+          name: profileData.name,
+          profile_picture_url: profileData.profile_picture_url,
+          access_token: longLivedTokenData.access_token,
+          token_expires_at: new Date(Date.now() + (longLivedTokenData.expires_in * 1000)).toISOString(),
+          business_account_type: profileData.account_type,
+          media_count: profileData.media_count,
+          followers_count: profileData.followers_count,
+          following_count: profileData.follows_count,
+          website: profileData.website,
+          biography: profileData.biography
+        })
 
-    if (storeError) {
-      throw storeError
+      if (storeError) {
+        console.error('Error storing Instagram account:', storeError)
+        throw storeError
+      }
+
+      return NextResponse.redirect(new URL(next, request.url))
+    } catch (error) {
+      console.error('Database error during Instagram callback:', error)
+      return NextResponse.redirect(new URL('/login?error=database_error', request.url))
     }
-
-    return NextResponse.redirect(new URL(next, request.url))
   } catch (error) {
     console.error('Instagram callback error:', error)
     return NextResponse.redirect(new URL('/login?error=unknown', request.url))
