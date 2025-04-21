@@ -33,13 +33,13 @@ export function HeroSection() {
         className="flex flex-col sm:flex-row items-center gap-3 flex-wrap justify-center w-full max-w-3xl mx-auto"
       >
         <div className="flex items-center space-x-2 px-4 py-2 bg-white/95 backdrop-blur-sm rounded-full border shadow-sm w-full sm:w-auto">
-          <TrendingUp className="h-4 w-4 text-[#FF9933] flex-shrink-0" />
-          <span className="text-sm font-semibold text-gray-800 truncate">भारत का No.1 Instagram Growth Platform</span>
+          <Star className="h-4 w-4 text-[#FF9933] flex-shrink-0" />
+          <span className="text-sm font-semibold text-gray-800 truncate">भारत का #1 Instagram ग्रोथ प्लेटफॉर्म</span>
           <span className="text-lg">🚀</span>
         </div>
         <div className="flex items-center space-x-2 px-4 py-2 bg-white/95 backdrop-blur-sm rounded-full border shadow-sm w-full sm:w-auto">
-          <Shield className="h-4 w-4 text-[#138808] flex-shrink-0" />
-          <span className="text-sm font-semibold text-gray-800">1,00,000+ Creators की पसंद</span>
+          <Users className="h-4 w-4 text-[#138808] flex-shrink-0" />
+          <span className="text-sm font-semibold text-gray-800">2,00,000+ क्रिएटर्स की पसंद</span>
           <span className="text-lg">🏆</span>
         </div>
       </motion.div>
