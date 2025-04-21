@@ -30,14 +30,16 @@ export async function GET(request: NextRequest) {
       }
 
       // Check if the session was successfully created
-      const { data: { session } } = await supabase.auth.getSession()
-      if (!session) {
-        console.error('No session after code exchange')
-        return NextResponse.redirect(new URL('/login?error=no_session_created', requestUrl.origin))
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      
+      if (sessionError || !session) {
+        console.error('No session after code exchange:', sessionError)
+        return NextResponse.redirect(new URL('/login?error=no_session', requestUrl.origin))
       }
 
       // Redirect to the next page with proper session
-      return NextResponse.redirect(new URL(next, requestUrl.origin))
+      const redirectUrl = new URL(next, requestUrl.origin)
+      return NextResponse.redirect(redirectUrl)
     } catch (error) {
       console.error('Auth callback error:', error)
       return NextResponse.redirect(new URL('/login?error=auth_exception', requestUrl.origin))
