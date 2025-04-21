@@ -1,25 +1,25 @@
+import { createClient } from '@supabase/supabase-js'
 import { instagramConfig } from './config'
 
 export class InstagramBusinessAuth {
   private static readonly GRAPH_API_URL = 'https://graph.instagram.com'
-  private static readonly AUTH_URL = 'https://api.instagram.com/oauth/authorize'
+  private static readonly AUTH_URL = 'https://www.instagram.com/oauth/authorize'
   private static readonly TOKEN_URL = 'https://api.instagram.com/oauth/access_token'
   private static readonly LONG_LIVED_TOKEN_URL = 'https://graph.instagram.com/access_token'
 
   static getAuthUrl(): string {
     const params = new URLSearchParams({
       client_id: process.env.NEXT_PUBLIC_INSTAGRAM_APP_ID!,
-      redirect_uri: instagramConfig.redirectUri || `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/instagram/callback`,
+      redirect_uri: instagramConfig.redirectUri,
       response_type: 'code',
       scope: [
-        'instagram_basic',
-        'instagram_content_publish',
-        'instagram_manage_insights',
-        'instagram_manage_comments',
-        'pages_show_list',
-        'pages_read_engagement'
+        'instagram_business_basic',
+        'instagram_business_content_publish',
+        'instagram_business_manage_comments',
+        'instagram_business_manage_messages',
+        'instagram_business_manage_insights'
       ].join(','),
-      state: new Date().getTime().toString(), // Simple state to prevent CSRF
+      enable_fb_login: '0',
       force_authentication: '1'
     })
 
@@ -30,29 +30,22 @@ export class InstagramBusinessAuth {
     access_token: string;
     user_id: string;
   }> {
-    try {
-      const response = await fetch(this.TOKEN_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-          client_id: process.env.NEXT_PUBLIC_INSTAGRAM_APP_ID!,
-          client_secret: process.env.INSTAGRAM_APP_SECRET!,
-          grant_type: 'authorization_code',
-          redirect_uri: instagramConfig.redirectUri || `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/instagram/callback`,
-          code,
-        }),
-      })
+    const response = await fetch(this.TOKEN_URL, {
+      method: 'POST',
+      body: new URLSearchParams({
+        client_id: process.env.NEXT_PUBLIC_INSTAGRAM_APP_ID!,
+        client_secret: process.env.INSTAGRAM_APP_SECRET!,
+        grant_type: 'authorization_code',
+        redirect_uri: instagramConfig.redirectUri,
+        code,
+      }),
+    })
 
-      if (!response.ok) {
-        const errorData = await response.text()
-        throw new Error(`Failed to exchange code for token: ${errorData}`)
-      }
-
-      return response.json()
-    } catch (error) {
-      console.error('Error exchanging code for token:', error)
-      throw new Error('Failed to exchange code for Instagram token')
+    if (!response.ok) {
+      throw new Error('Failed to exchange code for token')
     }
+
+    return response.json()
   }
 
   static async getLongLivedToken(shortLivedToken: string): Promise<{
@@ -60,36 +53,29 @@ export class InstagramBusinessAuth {
     token_type: string;
     expires_in: number;
   }> {
-    try {
-      const response = await fetch(`${this.LONG_LIVED_TOKEN_URL}?grant_type=ig_exchange_token&client_secret=${process.env.INSTAGRAM_APP_SECRET}&access_token=${shortLivedToken}`)
+    const response = await fetch(`${this.LONG_LIVED_TOKEN_URL}?grant_type=ig_exchange_token&client_secret=${process.env.INSTAGRAM_APP_SECRET}&access_token=${shortLivedToken}`)
 
-      if (!response.ok) {
-        const errorData = await response.text()
-        throw new Error(`Failed to get long-lived token: ${errorData}`)
-      }
-
-      return response.json()
-    } catch (error) {
-      console.error('Error getting long-lived token:', error)
-      throw new Error('Failed to get long-lived Instagram token')
+    if (!response.ok) {
+      throw new Error('Failed to get long-lived token')
     }
+
+    return response.json()
   }
 
   static async getBusinessProfile(accessToken: string): Promise<any> {
-    try {
-      const response = await fetch(
-        `${this.GRAPH_API_URL}/me?fields=id,username,name,profile_picture_url,account_type,media_count,followers_count,follows_count,website,biography&access_token=${accessToken}`
-      )
+    const response = await fetch(
+      `${this.GRAPH_API_URL}/me?fields=id,username,name,profile_picture_url,account_type,media_count,followers_count,follows_count,website,biography&access_token=${accessToken}`
+    )
 
-      if (!response.ok) {
-        const errorData = await response.text()
-        throw new Error(`Failed to fetch business profile: ${errorData}`)
-      }
-
-      return response.json()
-    } catch (error) {
-      console.error('Error fetching business profile:', error)
-      throw new Error('Failed to fetch Instagram business profile')
+    if (!response.ok) {
+      throw new Error('Failed to fetch business profile')
     }
+
+    return response.json()
+  }
+
+  static async storeBusinessAccount(userId: string, data: any): Promise<void> {
+    // This method should be called from a server-side API route
+    throw new Error('This method should be called from a server-side API route')
   }
 }

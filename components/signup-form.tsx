@@ -73,15 +73,12 @@ export function SignUpForm() {
           ])
 
         if (profileError) {
-          console.error('Error creating user profile:', profileError)
+          throw profileError
         }
 
         toast.success("Account created successfully! Please check your email to verify your account.")
         setIsOpen(false)
         setFormData({ fullName: "", email: "", phone: "", password: "" })
-        
-        // Redirect to dashboard after signup
-        window.location.href = '/dashboard'
       }
     } catch (error: any) {
       console.error('Signup error:', error)
@@ -93,13 +90,11 @@ export function SignUpForm() {
 
   const handleInstagramLogin = async () => {
     try {
-      setIsLoading(true)
       const authUrl = InstagramBusinessAuth.getAuthUrl()
       window.location.href = authUrl
     } catch (error) {
       console.error('Instagram login error:', error)
       toast.error('Failed to initiate Instagram login')
-      setIsLoading(false)
     }
   }
 
