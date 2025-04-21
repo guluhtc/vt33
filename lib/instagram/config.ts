@@ -8,10 +8,10 @@ export const instagramConfig = {
   redirectUri: `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/instagram/callback`,
   settings: {
     defaultPermissions: [
-      'instagram_basic',
-      'instagram_content_publish',
-      'instagram_manage_insights',
-      'instagram_manage_comments',
+      'instagram_business_basic',
+      'instagram_business_content_publish',
+      'instagram_business_manage_insights',
+      'instagram_business_manage_comments',
       'pages_show_list',
       'pages_read_engagement'
     ],
