@@ -10,12 +10,17 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const code = searchParams.get('code')
     const error = searchParams.get('error')
+    const error_reason = searchParams.get('error_reason')
+    const error_description = searchParams.get('error_description')
     const state = searchParams.get('state')
     const next = searchParams.get('next') || '/dashboard'
 
+    // Handle OAuth errors
     if (error) {
-      console.error('Instagram OAuth error:', error)
-      return NextResponse.redirect(new URL(`/login?error=${error}`, request.url))
+      console.error('Instagram OAuth error:', { error, error_reason, error_description })
+      return NextResponse.redirect(
+        new URL(`/login?error=${error}&reason=${error_reason}&description=${error_description}`, request.url)
+      )
     }
 
     if (!code || !state) {
@@ -48,7 +53,7 @@ export async function GET(request: Request) {
       await InstagramBusinessAuth.storeAuthSession(session.user.id, {
         access_token: longLivedTokenData.access_token,
         expires_in: longLivedTokenData.expires_in,
-        scope: tokenData.permissions.split(',')
+        scope: ['instagram_business_basic'] // Default scope since we don't get it in response
       })
 
       // Update user profile with Instagram data
@@ -78,7 +83,8 @@ export async function GET(request: Request) {
       return NextResponse.redirect(new URL(next, request.url))
     } catch (error: any) {
       console.error('Instagram auth error:', error)
-      return NextResponse.redirect(new URL(`/login?error=${error.message || 'unknown'}`, request.url))
+      const errorMessage = encodeURIComponent(error.message || 'unknown')
+      return NextResponse.redirect(new URL(`/login?error=${errorMessage}`, request.url))
     }
   } catch (error) {
     console.error('Instagram callback error:', error)

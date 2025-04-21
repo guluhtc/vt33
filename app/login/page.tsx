@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { motion } from "framer-motion"
 import { Loader2, Mail, Lock, Instagram } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -21,6 +21,25 @@ export default function LoginPage() {
     password: ""
   })
   const router = useRouter()
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    const error = searchParams?.get('error')
+    const reason = searchParams?.get('reason')
+    const description = searchParams?.get('description')
+
+    if (error) {
+      let errorMessage = 'Authentication failed'
+      
+      if (error === 'access_denied' && reason === 'user_denied') {
+        errorMessage = 'Instagram login was cancelled'
+      } else if (description) {
+        errorMessage = decodeURIComponent(description).replace(/\+/g, ' ')
+      }
+
+      toast.error(errorMessage)
+    }
+  }, [searchParams])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()

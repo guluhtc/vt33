@@ -23,7 +23,7 @@ export class InstagramBusinessAuth {
       ].join(','),
       enable_fb_login: '0',
       force_authentication: '1',
-      state: crypto.randomUUID() // For CSRF protection
+      state: crypto.randomUUID()
     })
 
     return `${this.AUTH_URL}?${params.toString()}`
@@ -32,18 +32,19 @@ export class InstagramBusinessAuth {
   static async exchangeCodeForToken(code: string): Promise<{
     access_token: string;
     user_id: string;
-    permissions: string;
   }> {
+    const formData = new URLSearchParams({
+      client_id: process.env.NEXT_PUBLIC_INSTAGRAM_APP_ID!,
+      client_secret: process.env.INSTAGRAM_APP_SECRET!,
+      grant_type: 'authorization_code',
+      redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/instagram/callback`,
+      code,
+    })
+
     const response = await fetch(this.TOKEN_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: new URLSearchParams({
-        client_id: process.env.NEXT_PUBLIC_INSTAGRAM_APP_ID!,
-        client_secret: process.env.INSTAGRAM_APP_SECRET!,
-        grant_type: 'authorization_code',
-        redirect_uri: `${process.env.NEXT_PUBLIC_APP_URL}/api/auth/instagram/callback`,
-        code,
-      }),
+      body: formData
     })
 
     if (!response.ok) {
@@ -51,8 +52,8 @@ export class InstagramBusinessAuth {
       throw new Error(`Failed to exchange code for token: ${error}`)
     }
 
-    const { data } = await response.json()
-    return data[0]
+    // The response comes directly, not wrapped in a data array
+    return response.json()
   }
 
   static async getLongLivedToken(shortLivedToken: string): Promise<{
